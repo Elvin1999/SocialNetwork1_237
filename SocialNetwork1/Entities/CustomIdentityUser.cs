@@ -6,8 +6,11 @@ namespace SocialNetwork1.Entities
     {
         public string? Image { get; set; }
         public bool IsOnline { get; set; }
+        public bool HasRequestPending { get; set; }
         public DateTime DisconnectTime { get; set; } = DateTime.Now;
         public string? ConnectTime { get; set; } = "";
+
+        public virtual ICollection<Friend>? Friends { get; set; }
 
     }
 }
