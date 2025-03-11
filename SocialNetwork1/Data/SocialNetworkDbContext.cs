@@ -16,6 +16,7 @@ namespace SocialNetwork1.Data
         {
             base.OnModelCreating(builder);
             builder.Entity<CustomIdentityUser>().Ignore(u => u.HasRequestPending);
+            builder.Entity<CustomIdentityUser>().Ignore(u => u.IsFriend);
         }
 
 

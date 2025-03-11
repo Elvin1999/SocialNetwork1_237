@@ -17,7 +17,14 @@ function GetAllUsers() {
                     subContent = `<button class='btn btn-outline-secondary' onclick="TakeRequest('${data[i].id}')">Already Sent</button>`
                 }
                 else {
-                    subContent = `<div class='btn btn-outline-primary' onclick="SendFollow('${data[i].id}')" >Follow</div>`;
+                    if (data[i].isFriend) {
+                        subContent = `<button class='btn btn-outline-secondary' onclick="SendFollow('${data[i].id}')" >UnFollow</button>
+                        <a class='btn btn-outline-success' href='Home/GoChat/${data[i].id}'>Send Message</a>
+                        `;
+                    }
+                    else {
+                        subContent = `<button class='btn btn-outline-primary' onclick="SendFollow('${data[i].id}')" >Follow</button>`;
+                    }
                 }
                 if (data[i].isOnline) {
                     style = "border:5px solid springgreen";
@@ -48,6 +55,28 @@ function GetAllUsers() {
     })
 }
 
+function DeclineRequest(id, senderId) {
+    $.ajax({
+        url: `/Home/DeclineRequest?id=${id}&senderId=${senderId}`,
+        method: "GET",
+        success: function (data) {
+            const element = document.querySelector("#alert");
+            element.style.display = "block";
+            element.innerHTML = "You declined request";
+
+            SendFollowCall(senderId);
+            GetMyRequests();
+            GetAllUsers();
+
+
+            setTimeOut(() => {
+                element.innerHTML = "";
+                element.style.display = "none";
+            }, 5000);
+        }
+    })
+}
+
 function GetMyRequests() {
     $.ajax({
         url: "/Home/GetAllRequests",
@@ -60,15 +89,15 @@ function GetMyRequests() {
                 if (data[i].status == "Request") {
                     subContent = `
                     <div class='card-body'>
-                    <button class='btn btn-success' >Accept</button>
-                    <button class='btn btn-warning' >Decline</button>
+                    <button class='btn btn-success' onclick="AcceptRequest('${data[i].senderId}','${data[i].receiverId}',${data[i].id})" >Accept</button>
+                    <button class='btn btn-warning' onclick="DeclineRequest(${data[i].id},'${data[i].senderId}')" >Decline</button>
                     </div>
                     `;
                 }
                 else {
                     subContent = `
                     <div class='card-body'>
-                    <button class='btn btn-warning' >Delete</button>
+                    <button class='btn btn-warning' onclick="DeleteRequest(${data[i].id})" >Delete</button>
                     </div>
                     `;
                 }
@@ -97,6 +126,17 @@ function GetMyRequests() {
 GetMyRequests();
 GetAllUsers();
 
+function DeleteRequest(id) {
+    $.ajax({
+        url: `/Home/DeleteRequest/${id}`,
+        method: "GET",
+        success: function (data) {
+
+            GetMyRequests();
+
+        }
+    })
+}
 
 function SendFollow(id) {
     $.ajax({
@@ -108,6 +148,26 @@ function SendFollow(id) {
             element.innerHTML = "Your friend request sent successfully";
             SendFollowCall(id);
             GetAllUsers();
+
+            setTimeout(() => {
+                element.innerHTML = "";
+                element.style.display = "none";
+            }, 5000);
+        }
+    })
+}
+
+function AcceptRequest(id, id2, requestId) {
+    $.ajax({
+        url: `/Home/AcceptRequest?senderId=${id}&receiverId=${id2}&requestId=${requestId}`,
+        method: "GET",
+        success: function (data) {
+            const element = document.querySelector("#alert");
+            element.style.display = "block";
+            element.innerHTML = "Your accept friend request successfully";
+            GetAllUsers();
+            SendFollowCall(id);
+            SendFollowCall(id2);
 
             setTimeout(() => {
                 element.innerHTML = "";

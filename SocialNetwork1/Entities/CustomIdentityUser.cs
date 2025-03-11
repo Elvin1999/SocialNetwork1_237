@@ -7,6 +7,7 @@ namespace SocialNetwork1.Entities
         public string? Image { get; set; }
         public bool IsOnline { get; set; }
         public bool HasRequestPending { get; set; }
+        public bool IsFriend { get; set; }
         public DateTime DisconnectTime { get; set; } = DateTime.Now;
         public string? ConnectTime { get; set; } = "";
 

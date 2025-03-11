@@ -37,17 +37,20 @@ namespace SocialNetwork1.Controllers
             var user = await _userManager.GetUserAsync(HttpContext.User);
             var myRequests = _context.FriendRequests.Where(r => r.SenderId == user.Id);
 
+            var myfriends = _context.Friends.Where(f => f.OwnId == user.Id || f.YourFriendId == user.Id);
+
 
             var users = await _context.Users
                 .Where(u => u.Id != user.Id)
-                .Select(u=>new CustomIdentityUser
+                .Select(u => new CustomIdentityUser
                 {
-                    Id=u.Id,
-                    UserName=u.UserName,
-                    IsOnline=u.IsOnline,
-                    Image=u.Image,
-                    Email=u.Email,
-                    HasRequestPending=(myRequests.FirstOrDefault(r=>r.ReceiverId==u.Id && r.Status=="Request")!=null)
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    IsFriend = (myfriends.FirstOrDefault(f => f.OwnId == u.Id || f.YourFriendId == u.Id) != null),
+                    IsOnline = u.IsOnline,
+                    Image = u.Image,
+                    Email = u.Email,
+                    HasRequestPending = (myRequests.FirstOrDefault(r => r.ReceiverId == u.Id && r.Status == "Request") != null)
                 })
                 .ToListAsync();
 
@@ -80,11 +83,82 @@ namespace SocialNetwork1.Controllers
         public async Task<ActionResult> TakeRequest(string id)
         {
             var current = await _userManager.GetUserAsync(HttpContext.User);
-            var request=await _context.FriendRequests.FirstOrDefaultAsync(r=>r.SenderId==current.Id&& r.ReceiverId==id);
+            var request = await _context.FriendRequests.FirstOrDefaultAsync(r => r.SenderId == current.Id && r.ReceiverId == id);
             if (request == null) return NotFound();
             _context.FriendRequests.Remove(request);
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        public async Task<IActionResult> DeclineRequest(int id, string senderId)
+        {
+            try
+            {
+                var current = await _userManager.GetUserAsync(HttpContext.User);
+                var request = await _context.FriendRequests.FirstOrDefaultAsync(r => r.Id == id);
+                _context.FriendRequests.Remove(request);
+
+                _context.FriendRequests.Add(new FriendRequest
+                {
+                    Content = $"{current.UserName} declined your friend request at {DateTime.Now.ToLongDateString()} {DateTime.Now.ToLongTimeString()}",
+                    SenderId = current.Id,
+                    Sender = current,
+                    ReceiverId = senderId,
+                    Status = "Notification"
+                });
+
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        public async Task<ActionResult> AcceptRequest(string senderId, string receiverId, int requestId)
+        {
+            var senderUser = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == senderId);
+            var receiverUser = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == receiverId);
+
+            if (senderUser == null || receiverUser == null) return BadRequest();
+            _context.FriendRequests.Add(new FriendRequest
+            {
+                SenderId = receiverId,
+                ReceiverId = senderId,
+                Sender = receiverUser,
+                Status = "Notification",
+                Content = $"{receiverUser.UserName} accepted friend request at ${DateTime.Now}"
+            });
+
+            var request = await _context.FriendRequests.FirstOrDefaultAsync(r => r.Id == requestId);
+            _context.FriendRequests.Remove(request);
+
+            _context.Friends.Add(new Friend
+            {
+                OwnId = senderId,
+                YourFriendId = receiverId
+            });
+
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        public async Task<ActionResult> DeleteRequest(int id)
+        {
+            try
+            {
+                var request = await _context.FriendRequests.FirstOrDefaultAsync(r => r.Id == id);
+                if (request == null) return NotFound();
+                _context.FriendRequests.Remove(request);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         public async Task<ActionResult> GetAllRequests()
