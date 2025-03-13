@@ -168,6 +168,51 @@ namespace SocialNetwork1.Controllers
             return Ok(requests);
         }
 
+        public async Task<IActionResult> GoChat(string id)
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            var chat = await _context.Chats.Include(nameof(Chat.Messages)).FirstOrDefaultAsync(c => c.SenderId == user.Id && c.ReceiverId == id
+            || c.SenderId == id && c.ReceiverId == user.Id
+            );
+
+            if (chat == null)
+            {
+                chat = new Chat
+                {
+                    ReceiverId = id,
+                    SenderId = user.Id,
+                    Messages = new List<Message>()
+                };
+
+                await _context.Chats.AddAsync(chat);
+                await _context.SaveChangesAsync();
+            }
+
+            var chats = _context.Chats.Include(nameof(Chat.Messages)).Where(c => c.SenderId == user.Id || c.ReceiverId == user.Id);
+
+            var chatBlocks = from c in chats
+                             let receiver = (user.Id != c.ReceiverId) ? c.Receiver : _context.Users.FirstOrDefault(u => u.Id == c.SenderId)
+                             select new Chat
+                             {
+                                 Messages = c.Messages,
+                                 Id = c.Id,
+                                 SenderId = c.SenderId,
+                                 Receiver = receiver,
+                                 ReceiverId = receiver.Id
+                             };
+
+            var model = new ChatViewModel
+            {
+                CurrentUserId = user.Id,
+                CurrentReceiver = id,
+                CurrentChat = chat,
+                Chats = chatBlocks
+            };
+
+            return View(model);
+
+        }
+
         public IActionResult Privacy()
         {
             return View();

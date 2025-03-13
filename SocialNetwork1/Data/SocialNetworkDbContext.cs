@@ -11,7 +11,8 @@ namespace SocialNetwork1.Data
 
         public DbSet<Friend> Friends { get; set; }
         public DbSet<FriendRequest> FriendRequests { get; set; }
-
+        public DbSet<Chat> Chats { get; set; }
+        public DbSet<Message> Messages { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
