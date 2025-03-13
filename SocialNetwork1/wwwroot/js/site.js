@@ -126,6 +126,67 @@ function GetMyRequests() {
 GetMyRequests();
 GetAllUsers();
 
+
+function GetMessages(currentId, receiverId, senderId) {
+    console.log("CurrentId", currentId);
+    console.log("senderId", senderId);
+    console.log("receiverId", receiverId);
+    $.ajax({
+        url: `/Home/GetAllMessages?receiverId=${receiverId}&senderId=${senderId}`,
+        method: 'GET',
+        success: function (data) {
+            let content = "";
+            for (var i = 0; i < data.messages.length; i++) {
+
+                let item = ``;
+
+                if (senderId == data.messages[i].senderId) {
+                    item = ` <section style="display:flex;margin-top:25px;border:4px solid springgreen;
+margin-left:150px;border-radius:20px 0 0 20px;padding:20px;width:50%">
+
+                <h5>${data.messages[i].content}</h5>
+                <p>${data.messages[i].dateTime}</p>
+            </section>`;
+
+                }
+                else {
+                    item = `  <section style="display:flex;margin-top:25px;border:4px solid deepskyblue;
+margin-left:0;border-radius:0 20px 20px 0;padding:20px;width:50%">
+
+                <h5>${data.messages[i].content}</h5>
+                <p>${data.messages[i].dateTime}</p>
+            </section>
+            `;
+                }
+
+                content += item;
+            }
+
+            $("#currentMessages").html(content);
+        }
+    })
+}
+
+function SendMessage(receiverId, senderId) {
+    const content = document.querySelector("#message-input");
+    let obj = {
+        receiverId: receiverId,
+        senderId: senderId,
+        content: content.value
+    };
+
+    $.ajax({
+        url: `/Home/AddMessage`,
+        method: "POST",
+        data: obj,
+        success: function (data) {
+            GetMessageCall(receiverId,senderId);
+            content.value = "";
+        }
+    })
+}
+
+
 function DeleteRequest(id) {
     $.ajax({
         url: `/Home/DeleteRequest/${id}`,

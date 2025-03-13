@@ -213,6 +213,45 @@ namespace SocialNetwork1.Controllers
 
         }
 
+
+        [HttpPost(Name ="AddMessage")]
+        public async Task<ActionResult> AddMessage(MessageModel model)
+        {
+            var chat=await _context.Chats.FirstOrDefaultAsync(c=>c.SenderId==model.SenderId && c.ReceiverId==model.ReceiverId
+            || c.SenderId == model.ReceiverId && c.ReceiverId == model.SenderId
+            );
+
+            if (chat != null)
+            {
+                var message = new Message
+                {
+                    ChatId = chat.Id,
+                    Content = model.Content,
+                    DateTime = DateTime.Now,
+                    IsImage = false,
+                    HasSeen = false,
+                    SenderId = model.SenderId
+                };
+
+                await _context.Messages.AddAsync(message);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            return BadRequest("No chat exist");
+        }
+
+        public async Task<ActionResult> GetAllMessages(string receiverId,string senderId)
+        {
+            var chat = await _context.Chats.Include(nameof(Chat.Messages)).FirstOrDefaultAsync(c => c.SenderId == senderId && c.ReceiverId == receiverId
+            || c.ReceiverId == senderId && c.SenderId == receiverId);
+            if (chat != null)
+            {
+                var user = await _userManager.GetUserAsync(HttpContext.User);
+                return Ok(new { Messages = chat.Messages, CurrentUserId = user.Id });
+            }
+            return Ok();
+        }
+
         public IActionResult Privacy()
         {
             return View();

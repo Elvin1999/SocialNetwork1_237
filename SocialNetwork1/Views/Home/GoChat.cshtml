@@ -56,8 +56,16 @@ margin-left:0;border-radius:0 20px 20px 0;padding:20px;width:50%">
             </div>
             <section style="margin-top:20px;">
                 <input id="message-input" type="text" />
-                <a class="btn btn-primary" onclick="SendMessage('@Model.CurrentChat.ReceiverId','@Model.CurrentChat.SenderId')">Send Message</a>
+                <a class="btn btn-primary" onclick="SendMessage('@Model.CurrentReceiver','@Model.CurrentUserId')">Send Message</a>
             </section>
         </div>
     </div>
 </div>
+
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="~/js/signalr/dist/browser/signalr.js" asp-append-version="true"></script>
+<script src="~/js/chat.js" asp-append-version="true"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>

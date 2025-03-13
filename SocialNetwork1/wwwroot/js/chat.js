@@ -40,3 +40,11 @@ connection.on("ReceiveNotification", function () {
     GetMyRequests();
     GetAllUsers();
 })
+
+async function GetMessageCall(receiverId, senderId) {
+    await connection.invoke("GetMessages", receiverId, senderId);
+}
+
+connection.on("ReceiveMessages", function (receiverId, senderId, currentId) {
+    GetMessages(currentId, receiverId, senderId);
+})
